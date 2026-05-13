@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OrderService.DTOs;
 using OrderService.Models;
 using OrderService.Repositories;
+using OrderService.Services;
 
 namespace OrderService.Controllers;
 
@@ -11,10 +12,13 @@ namespace OrderService.Controllers;
 public class OrderController : ControllerBase
 {
     private readonly IOrderRepository _repository;
+    private readonly RabbitMQPublisher _publisher;
 
-    public OrderController(IOrderRepository repository)
+
+    public OrderController(IOrderRepository repository, RabbitMQPublisher publisher)
     {
         _repository = repository;
+        _publisher = publisher;
     }
 
     [Authorize]
@@ -37,6 +41,13 @@ public class OrderController : ControllerBase
         order.TotalAmount = order.Items.Sum(i => i.Price * i.Quantity);
 
         var created = await _repository.CreateAsync(order);
+
+        await _publisher.PublishAsync("order-created", new
+{
+    order.Id,
+    order.UserId,
+    order.TotalAmount
+});
 
         return Ok(new OrderResponseDto
         {
