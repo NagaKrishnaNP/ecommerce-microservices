@@ -48,6 +48,7 @@ public class AuthController : ControllerBase
         return Ok("User registered successfully");
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
