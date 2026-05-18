@@ -42,12 +42,12 @@ public class OrderController : ControllerBase
 
         var created = await _repository.CreateAsync(order);
 
-        await _publisher.PublishAsync("order-created", new
-{
-    order.Id,
-    order.UserId,
-    order.TotalAmount
-});
+        _publisher.Publish("order-created", new
+        {
+            order.Id,
+            order.UserId,
+            order.TotalAmount
+        });
 
         return Ok(new OrderResponseDto
         {
@@ -83,5 +83,13 @@ public class OrderController : ControllerBase
                 Price = i.Price
             }).ToList()
         }));
+    }
+
+    [HttpPost("checkout")]
+    public async Task<IActionResult> Checkout(Order order)
+    {
+        await _repository.PlaceOrder(order);
+
+        return Ok(new { message = "Order placed" });
     }
 }

@@ -27,6 +27,15 @@ public class CartController : ControllerBase
     {
         var cart = await _cartService.GetCart(userId);
 
+        if (cart == null)
+        {
+            cart = new Cart
+            {
+                UserId = userId,
+                Items = new List<CartItem>()
+            };
+        }
+
         var existing = cart.Items.FirstOrDefault(x => x.ProductId == item.ProductId);
 
         if (existing != null)
@@ -43,6 +52,30 @@ public class CartController : ControllerBase
     public async Task<IActionResult> ClearCart(string userId)
     {
         await _cartService.ClearCart(userId);
-        return Ok("Cart cleared");
+        return Ok(new { message = "Cart cleared" });
     }
+
+    [HttpDelete("{userId}/remove/{productId}")]
+public async Task<IActionResult> RemoveFromCart(string userId, int productId)
+{
+    var cart = await _cartService.GetCart(userId);
+
+    if (cart == null || !cart.Items.Any())
+        return NotFound("Cart is empty");
+
+    var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
+
+    if (item == null)
+        return NotFound("Item not found");
+
+    cart.Items.Remove(item);
+
+    // If cart becomes empty → delete key (clean approach)
+    if (!cart.Items.Any())
+        await _cartService.ClearCart(userId);
+    else
+        await _cartService.SaveCart(cart);
+
+    return Ok(cart);
+}
 }

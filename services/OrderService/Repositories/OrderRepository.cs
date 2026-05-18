@@ -7,10 +7,12 @@ namespace OrderService.Repositories;
 public class OrderRepository : IOrderRepository
 {
     private readonly OrderDbContext _context;
+    private readonly RabbitMQService _rabbit;
 
-    public OrderRepository(OrderDbContext context)
+    public OrderRepository(OrderDbContext context, RabbitMQService rabbit)
     {
         _context = context;
+        _rabbit = rabbit;
     }
 
     public async Task<Order> CreateAsync(Order order)
@@ -25,5 +27,20 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders
             .Include(o => o.Items)
             .ToListAsync();
+    }
+
+    public async Task PlaceOrder(Order order)
+    {
+        // 1️⃣ Save to DB
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync();
+
+        // 2️⃣ Publish event
+        _rabbit.Publish(new
+        {
+            order.Id,
+            order.UserId,
+            order.Items
+        });
     }
 }

@@ -1,21 +1,19 @@
-using RabbitMQ.Client;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
+using RabbitMQ.Client;
 
-namespace OrderService.Services;
-
-public class RabbitMQPublisher
+public class RabbitMQService
 {
     private readonly IModel _channel;
 
-    public RabbitMQPublisher()
+    public RabbitMQService()
     {
         var factory = new ConnectionFactory()
         {
             HostName = "localhost"
         };
 
-        var connection = factory.CreateConnection();
+        var connection = factory.CreateConnection(); // ✅ FIXED
         _channel = connection.CreateModel();
 
         _channel.QueueDeclare(
@@ -27,14 +25,13 @@ public class RabbitMQPublisher
         );
     }
 
-    public void Publish(string queueName, object message)
+    public void Publish(object message)
     {
-        var json = JsonConvert.SerializeObject(message);
-        var body = Encoding.UTF8.GetBytes(json);
+        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
 
         _channel.BasicPublish(
             exchange: "",
-            routingKey: queueName,
+            routingKey: "orderQueue",
             basicProperties: null,
             body: body
         );

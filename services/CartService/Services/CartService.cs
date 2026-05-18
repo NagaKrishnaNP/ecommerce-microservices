@@ -10,27 +10,27 @@ public class CartServiceRedis
 
     public CartServiceRedis(IConnectionMultiplexer redis)
     {
-        _db = redis.GetDatabase();
+        _db = redis.GetDatabase(0);
     }
 
-    public async Task<Cart> GetCart(string userId)
+    public async Task<Cart?> GetCart(string userId)
     {
-        var data = await _db.StringGetAsync(userId);
+        var data = await _db.StringGetAsync($"cart:{userId}");
 
-        if (data.IsNullOrEmpty)
-            return new Cart { UserId = userId };
+        if (string.IsNullOrEmpty(data))
+            return new Cart { UserId = userId, Items = new List<CartItem>() };
 
-        return JsonSerializer.Deserialize<Cart>(data!)!;
+        return JsonSerializer.Deserialize<Cart>(data);
     }
 
     public async Task SaveCart(Cart cart)
     {
         var json = JsonSerializer.Serialize(cart);
-        await _db.StringSetAsync(cart.UserId, json);
+        await _db.StringSetAsync($"cart:{cart.UserId}", JsonSerializer.Serialize(cart));
     }
 
     public async Task ClearCart(string userId)
     {
-        await _db.KeyDeleteAsync(userId);
+        await _db.KeyDeleteAsync($"cart:{userId}");
     }
 }

@@ -8,6 +8,8 @@ public interface IProductRepository
 
     Task<Product?> GetByIdAsync(int id);
 
+    Task<Product?> GetByNameAsync(string name);
+
     Task<Product> CreateAsync(Product product);
 
     Task<Product?> UpdateAsync(int id, Product product);
