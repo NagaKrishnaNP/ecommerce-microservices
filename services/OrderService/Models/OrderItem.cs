@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace OrderService.Models;
 
 public class OrderItem
@@ -12,5 +14,6 @@ public class OrderItem
 
     public int OrderId { get; set; }
 
-    public Order Order { get; set; } = null!;
+    [JsonIgnore]   // 🔥 key fix
+    public Order? Order { get; set; }
 }

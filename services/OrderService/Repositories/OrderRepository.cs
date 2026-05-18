@@ -35,6 +35,13 @@ public class OrderRepository : IOrderRepository
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
 
+        foreach (var item in order.Items)
+        {
+            item.OrderId = order.Id;
+        }
+
+        await _context.SaveChangesAsync();
+
         // 2️⃣ Publish event
         _rabbit.Publish(new
         {
